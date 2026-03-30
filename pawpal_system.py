@@ -1,4 +1,5 @@
 from __future__ import annotations
+from collections import defaultdict
 from dataclasses import dataclass, field
 from datetime import date, time, datetime, timedelta
 from typing import Optional
@@ -18,6 +19,12 @@ class Recurrence(Enum):
     NONE   = "none"
     DAILY  = "daily"
     WEEKLY = "weekly"
+
+
+_RECURRENCE_DELTA: dict[Recurrence, timedelta] = {
+    Recurrence.DAILY:  timedelta(days=1),
+    Recurrence.WEEKLY: timedelta(weeks=1),
+}
 
 
 @dataclass
@@ -68,12 +75,10 @@ class Task:
         """
         self._is_complete = True
 
-        if self.recurrence == Recurrence.DAILY:
-            next_due = date.today() + timedelta(days=1)
-        elif self.recurrence == Recurrence.WEEKLY:
-            next_due = date.today() + timedelta(weeks=1)
-        else:
+        delta = _RECURRENCE_DELTA.get(self.recurrence)
+        if delta is None:
             return None
+        next_due = date.today() + delta
 
         return Task(
             name=self.name,
@@ -247,7 +252,15 @@ class Scheduler:
         return list(self._tasks)
 
     def filter_by_status(self, complete: bool) -> list[Task]:
-        """Return tasks whose completion status matches the given boolean."""
+        """Return tasks matching the given completion status.
+
+        Args:
+            complete: Pass True to get completed tasks, False for pending tasks.
+
+        Returns:
+            A filtered list of Task objects whose is_complete matches the argument.
+            Returns an empty list if no tasks match.
+        """
         return [t for t in self._tasks if t.is_complete == complete]
 
     def sort_by_time(self) -> list[Task]:
@@ -264,6 +277,31 @@ class Scheduler:
             self._tasks,
             key=lambda t: tuple(map(int, t.scheduled_time.split(":"))) if t.scheduled_time else (24, 0),
         )
+
+    def detect_conflicts(self) -> list[str]:
+        """Detect tasks scheduled at the same time and return warning messages.
+
+        Groups all tasks by their scheduled_time in a single O(n) pass using
+        a defaultdict. Any time slot with more than one task is flagged.
+
+        Tasks without a scheduled_time are skipped silently.
+        Returns an empty list if no conflicts are found — never raises.
+
+        Returns:
+            A list of warning strings in the format:
+            "Conflict at HH:MM: Task A, Task B"
+        """
+        time_groups: dict[str, list[Task]] = defaultdict(list)
+        for task in self._tasks:
+            if task.scheduled_time:
+                time_groups[task.scheduled_time].append(task)
+
+        warnings = []
+        for scheduled_time, tasks in time_groups.items():
+            if len(tasks) > 1:
+                names = ", ".join(t.name for t in tasks)
+                warnings.append(f"Conflict at {scheduled_time}: {names}")
+        return warnings
 
     def generate_routine(
         self,

@@ -37,6 +37,8 @@ TASKS_DATA = [
     {"pet": "Mochi", "name": "Mochi's Eye Drops",       "daily_occurrence": 2, "category": TaskCategory.MEDICATION, "assigned_to": None,   "scheduled_time": "09:00", "recurrence": Recurrence.DAILY},
     {"pet": "Mochi", "name": "Feed Mochi",              "daily_occurrence": 3, "category": TaskCategory.FEEDING,    "assigned_to": None,   "scheduled_time": "07:30", "recurrence": Recurrence.DAILY},
     {"pet": "Luna",  "name": "Luna's Joint Supplement", "daily_occurrence": 1, "category": TaskCategory.MEDICATION, "assigned_to": None,   "scheduled_time": "08:00", "recurrence": Recurrence.NONE},
+    # Intentional conflict: same time as Mochi's Eye Drops (09:00) to test detect_conflicts()
+    {"pet": "Luna",  "name": "Luna's Morning Check",    "daily_occurrence": 1, "category": TaskCategory.OTHER,      "assigned_to": None,   "scheduled_time": "09:00", "recurrence": Recurrence.DAILY},
 ]
 
 task_objects = []
@@ -57,6 +59,15 @@ for task_info in TASKS_DATA:
 scheduler = Scheduler()
 for task in owner.tasks:
     scheduler.add_task(task)
+
+# --- Conflict detection (runs before printing the schedule) ---
+conflicts = scheduler.detect_conflicts()
+if conflicts:
+    print("SCHEDULE WARNINGS:")
+    for warning in conflicts:
+        print(f"  ! {warning}")
+else:
+    print("No scheduling conflicts detected.")
 
 routine = scheduler.generate_routine(
     routine_name="Today's Schedule",
