@@ -29,12 +29,18 @@
 **a. Constraints and priorities**
 
 - What constraints does your scheduler consider (for example: time, priority, preferences)?
+    Constraints that my scheduler considers is time. It checked if start times for tasks were equal to each other.
+
 - How did you decide which constraints mattered most?
+    I was mainly focused on getting the bare bones of the scheduler implemented, and the first constraint that came to mind was time.
 
 **b. Tradeoffs**
 
 - Describe one tradeoff your scheduler makes.
+    One tradeoff that my scheduler makes is that it gives a warning when two task's start times are equal to each other. Ideally, the scheduler should also be able to detect overlapping durations as well.
+
 - Why is that tradeoff reasonable for this scenario?
+    This tradeoff is reasonable because we do want the code to give a warning if two tasks start times are equal to each other, and we are in the early stages of development. Features can be more fleshed out as further development occurs.
 
 ---
 
