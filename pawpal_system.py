@@ -53,6 +53,8 @@ class Task:
     scheduled_time: Optional[str] = None          # "HH:MM" format, e.g. "07:30"
     recurrence: Recurrence = Recurrence.NONE
     next_due: Optional[date] = None
+    duration: int = 15                            # estimated duration in minutes
+    priority: int = 3                             # 1 = highest importance, 5 = lowest
     _is_complete: bool = field(default=False, repr=False, init=False)
 
     def set_name(self, name: str) -> None:
@@ -89,6 +91,8 @@ class Task:
             scheduled_time=self.scheduled_time,
             recurrence=self.recurrence,
             next_due=next_due,
+            duration=self.duration,
+            priority=self.priority,
         )
 
     @property
@@ -246,6 +250,11 @@ class Scheduler:
         """Add a task to the scheduler's pool for routine generation."""
         self._tasks.append(task)
 
+    def remove_task(self, task: Task) -> None:
+        """Remove a task from the scheduler's pool if it exists."""
+        if task in self._tasks:
+            self._tasks.remove(task)
+
     @property
     def tasks(self) -> list[Task]:
         """Return a copy of all tasks currently in the scheduler."""
@@ -328,9 +337,8 @@ class Scheduler:
 
 
 class User:
-    def __init__(self, username: str, password: str, first_name: str):
+    def __init__(self, username: str, first_name: str):
         self._username = username
-        self._password = password
         self._first_name = first_name
         self._pets: list[Pet] = []
         self._tasks: list[Task] = []
@@ -368,6 +376,11 @@ class User:
     def add_task(self, task: Task) -> None:
         """Register a task under this user."""
         self._tasks.append(task)
+
+    def remove_task(self, task: Task) -> None:
+        """Remove a task from the user's task list if it exists."""
+        if task in self._tasks:
+            self._tasks.remove(task)
 
     def add_household_member(self, member: HouseholdMember) -> None:
         """Add a household member to this user's household."""

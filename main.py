@@ -2,7 +2,7 @@ from datetime import date, time
 from pawpal_system import HouseholdMember, Pet, Task, TaskCategory, Recurrence, Scheduler, User
 
 # --- Setup ---
-owner = User(username="jsmith", password="secret", first_name="Jamie")
+owner = User(username="jsmith", first_name="Jamie")
 
 # --- Pets ---
 PETS_DATA = [
@@ -31,14 +31,14 @@ for member_info in MEMBERS_DATA:
 # Each entry: pet name, task name, daily_occurrence, category, assigned_to (member name or None)
 # Tasks are intentionally out of time order to verify sort_by_time() works correctly.
 TASKS_DATA = [
-    {"pet": "Luna",  "name": "Walk Luna",               "daily_occurrence": 1, "category": TaskCategory.WALK,       "assigned_to": "Alex", "scheduled_time": "17:30", "recurrence": Recurrence.DAILY},
-    {"pet": "Mochi", "name": "Brush Mochi",             "daily_occurrence": 1, "category": TaskCategory.GROOMING,   "assigned_to": "Alex", "scheduled_time": "19:00", "recurrence": Recurrence.WEEKLY},
-    {"pet": "Luna",  "name": "Feed Luna",               "daily_occurrence": 2, "category": TaskCategory.FEEDING,    "assigned_to": None,   "scheduled_time": "07:00", "recurrence": Recurrence.DAILY},
-    {"pet": "Mochi", "name": "Mochi's Eye Drops",       "daily_occurrence": 2, "category": TaskCategory.MEDICATION, "assigned_to": None,   "scheduled_time": "09:00", "recurrence": Recurrence.DAILY},
-    {"pet": "Mochi", "name": "Feed Mochi",              "daily_occurrence": 3, "category": TaskCategory.FEEDING,    "assigned_to": None,   "scheduled_time": "07:30", "recurrence": Recurrence.DAILY},
-    {"pet": "Luna",  "name": "Luna's Joint Supplement", "daily_occurrence": 1, "category": TaskCategory.MEDICATION, "assigned_to": None,   "scheduled_time": "08:00", "recurrence": Recurrence.NONE},
+    {"pet": "Luna",  "name": "Walk Luna",               "daily_occurrence": 1, "category": TaskCategory.WALK,       "assigned_to": "Alex", "scheduled_time": "17:30", "recurrence": Recurrence.DAILY,  "duration": 30, "priority": 2},
+    {"pet": "Mochi", "name": "Brush Mochi",             "daily_occurrence": 1, "category": TaskCategory.GROOMING,   "assigned_to": "Alex", "scheduled_time": "19:00", "recurrence": Recurrence.WEEKLY, "duration": 20, "priority": 4},
+    {"pet": "Luna",  "name": "Feed Luna",               "daily_occurrence": 2, "category": TaskCategory.FEEDING,    "assigned_to": None,   "scheduled_time": "07:00", "recurrence": Recurrence.DAILY,  "duration": 10, "priority": 2},
+    {"pet": "Mochi", "name": "Mochi's Eye Drops",       "daily_occurrence": 2, "category": TaskCategory.MEDICATION, "assigned_to": None,   "scheduled_time": "09:00", "recurrence": Recurrence.DAILY,  "duration": 5,  "priority": 1},
+    {"pet": "Mochi", "name": "Feed Mochi",              "daily_occurrence": 3, "category": TaskCategory.FEEDING,    "assigned_to": None,   "scheduled_time": "07:30", "recurrence": Recurrence.DAILY,  "duration": 10, "priority": 2},
+    {"pet": "Luna",  "name": "Luna's Joint Supplement", "daily_occurrence": 1, "category": TaskCategory.MEDICATION, "assigned_to": None,   "scheduled_time": "08:00", "recurrence": Recurrence.NONE,   "duration": 5,  "priority": 1},
     # Intentional conflict: same time as Mochi's Eye Drops (09:00) to test detect_conflicts()
-    {"pet": "Luna",  "name": "Luna's Morning Check",    "daily_occurrence": 1, "category": TaskCategory.OTHER,      "assigned_to": None,   "scheduled_time": "09:00", "recurrence": Recurrence.DAILY},
+    {"pet": "Luna",  "name": "Luna's Morning Check",    "daily_occurrence": 1, "category": TaskCategory.OTHER,      "assigned_to": None,   "scheduled_time": "09:00", "recurrence": Recurrence.DAILY,  "duration": 10, "priority": 5},
 ]
 
 task_objects = []
@@ -49,6 +49,8 @@ for task_info in TASKS_DATA:
         category=task_info["category"],
         scheduled_time=task_info["scheduled_time"],
         recurrence=task_info["recurrence"],
+        duration=task_info["duration"],
+        priority=task_info["priority"],
     )
     task.set_pet(pets[task_info["pet"]], owner)
     if task_info["assigned_to"]:

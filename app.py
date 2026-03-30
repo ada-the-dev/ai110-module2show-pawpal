@@ -48,7 +48,7 @@ with st.form("owner_form"):
     username   = st.text_input("Username",   placeholder="e.g. jsmith")
     submitted  = st.form_submit_button("Create Profile")
     if submitted:
-        st.session_state.owner = User(username=username, password="", first_name=first_name)
+        st.session_state.owner = User(username=username, first_name=first_name)
         st.session_state.scheduler = Scheduler()
         st.success(f"Profile created for {first_name}.")
 
@@ -98,6 +98,8 @@ else:
         category       = st.selectbox("Category", [c.value for c in TaskCategory])
         recurrence     = st.selectbox("Recurrence", [r.value for r in Recurrence])
         scheduled_time = st.time_input("Scheduled time", value=time(8, 0))
+        duration       = st.number_input("Duration (minutes)", min_value=1, max_value=240, value=15)
+        priority       = st.number_input("Priority (1 = highest, 5 = lowest)", min_value=1, max_value=5, value=3)
         pet_names      = [p.name for p in st.session_state.owner.pets]
         selected_pet   = st.selectbox("For which pet?", pet_names)
         assignee_options = ["Owner"] + [m.name for m in st.session_state.members]
@@ -111,6 +113,8 @@ else:
                 category=TaskCategory(category),
                 recurrence=Recurrence(recurrence),
                 scheduled_time=scheduled_time.strftime("%H:%M"),
+                duration=duration,
+                priority=priority,
             )
             task.set_pet(pet, st.session_state.owner)
             if selected_assignee != "Owner":
@@ -118,6 +122,45 @@ else:
                 task.set_task_owner(member)
             st.session_state.scheduler.add_task(task)
             st.success(f"Task '{task_name}' added for {selected_pet}, assigned to {selected_assignee}.")
+
+# --- Edit a task ---
+st.subheader("Edit a Task")
+if st.session_state.owner is None or not st.session_state.owner.tasks:
+    st.info("Add a task first.")
+else:
+    task_names = [t.name for t in st.session_state.owner.tasks]
+    selected_task_name = st.selectbox("Select a task to edit", task_names, key="edit_select")
+    task_to_edit = next(t for t in st.session_state.owner.tasks if t.name == selected_task_name)
+
+    with st.form("edit_task_form"):
+        new_name       = st.text_input("Task name", value=task_to_edit.name)
+        new_occurrence = st.number_input("Times per day", min_value=1, max_value=10, value=task_to_edit.daily_occurrence)
+        new_category   = st.selectbox("Category", [c.value for c in TaskCategory], index=list(TaskCategory).index(task_to_edit.category))
+        new_recurrence = st.selectbox("Recurrence", [r.value for r in Recurrence], index=list(Recurrence).index(task_to_edit.recurrence))
+        new_duration   = st.number_input("Duration (minutes)", min_value=1, max_value=240, value=task_to_edit.duration)
+        new_priority   = st.number_input("Priority (1 = highest, 5 = lowest)", min_value=1, max_value=5, value=task_to_edit.priority)
+        submitted      = st.form_submit_button("Save Changes")
+        if submitted:
+            task_to_edit.set_name(new_name)
+            task_to_edit.set_occurrence(new_occurrence)
+            task_to_edit.category   = TaskCategory(new_category)
+            task_to_edit.recurrence = Recurrence(new_recurrence)
+            task_to_edit.duration   = new_duration
+            task_to_edit.priority   = new_priority
+            st.success(f"Task updated.")
+
+# --- Remove a task ---
+st.subheader("Remove a Task")
+if st.session_state.owner is None or not st.session_state.owner.tasks:
+    st.info("No tasks to remove.")
+else:
+    task_names = [t.name for t in st.session_state.owner.tasks]
+    selected_remove_name = st.selectbox("Select a task to remove", task_names, key="remove_select")
+    if st.button("Remove Task"):
+        task_to_remove = next(t for t in st.session_state.owner.tasks if t.name == selected_remove_name)
+        st.session_state.owner.remove_task(task_to_remove)
+        st.session_state.scheduler.remove_task(task_to_remove)
+        st.success(f"'{selected_remove_name}' removed.")
 
 st.divider()
 
