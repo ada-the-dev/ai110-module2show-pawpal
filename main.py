@@ -1,5 +1,5 @@
 from datetime import date, time
-from pawpal_system import HouseholdMember, Pet, Task, TaskCategory, Scheduler, User
+from pawpal_system import HouseholdMember, Pet, Task, TaskCategory, Recurrence, Scheduler, User
 
 # --- Setup ---
 owner = User(username="jsmith", password="secret", first_name="Jamie")
@@ -31,12 +31,12 @@ for member_info in MEMBERS_DATA:
 # Each entry: pet name, task name, daily_occurrence, category, assigned_to (member name or None)
 # Tasks are intentionally out of time order to verify sort_by_time() works correctly.
 TASKS_DATA = [
-    {"pet": "Luna",  "name": "Walk Luna",               "daily_occurrence": 1, "category": TaskCategory.WALK,       "assigned_to": "Alex", "scheduled_time": "17:30"},
-    {"pet": "Mochi", "name": "Brush Mochi",             "daily_occurrence": 1, "category": TaskCategory.GROOMING,   "assigned_to": "Alex", "scheduled_time": "19:00"},
-    {"pet": "Luna",  "name": "Feed Luna",               "daily_occurrence": 2, "category": TaskCategory.FEEDING,    "assigned_to": None,   "scheduled_time": "07:00"},
-    {"pet": "Mochi", "name": "Mochi's Eye Drops",       "daily_occurrence": 2, "category": TaskCategory.MEDICATION, "assigned_to": None,   "scheduled_time": "09:00"},
-    {"pet": "Mochi", "name": "Feed Mochi",              "daily_occurrence": 3, "category": TaskCategory.FEEDING,    "assigned_to": None,   "scheduled_time": "07:30"},
-    {"pet": "Luna",  "name": "Luna's Joint Supplement", "daily_occurrence": 1, "category": TaskCategory.MEDICATION, "assigned_to": None,   "scheduled_time": "08:00"},
+    {"pet": "Luna",  "name": "Walk Luna",               "daily_occurrence": 1, "category": TaskCategory.WALK,       "assigned_to": "Alex", "scheduled_time": "17:30", "recurrence": Recurrence.DAILY},
+    {"pet": "Mochi", "name": "Brush Mochi",             "daily_occurrence": 1, "category": TaskCategory.GROOMING,   "assigned_to": "Alex", "scheduled_time": "19:00", "recurrence": Recurrence.WEEKLY},
+    {"pet": "Luna",  "name": "Feed Luna",               "daily_occurrence": 2, "category": TaskCategory.FEEDING,    "assigned_to": None,   "scheduled_time": "07:00", "recurrence": Recurrence.DAILY},
+    {"pet": "Mochi", "name": "Mochi's Eye Drops",       "daily_occurrence": 2, "category": TaskCategory.MEDICATION, "assigned_to": None,   "scheduled_time": "09:00", "recurrence": Recurrence.DAILY},
+    {"pet": "Mochi", "name": "Feed Mochi",              "daily_occurrence": 3, "category": TaskCategory.FEEDING,    "assigned_to": None,   "scheduled_time": "07:30", "recurrence": Recurrence.DAILY},
+    {"pet": "Luna",  "name": "Luna's Joint Supplement", "daily_occurrence": 1, "category": TaskCategory.MEDICATION, "assigned_to": None,   "scheduled_time": "08:00", "recurrence": Recurrence.NONE},
 ]
 
 task_objects = []
@@ -46,6 +46,7 @@ for task_info in TASKS_DATA:
         daily_occurrence=task_info["daily_occurrence"],
         category=task_info["category"],
         scheduled_time=task_info["scheduled_time"],
+        recurrence=task_info["recurrence"],
     )
     task.set_pet(pets[task_info["pet"]], owner)
     if task_info["assigned_to"]:
@@ -63,10 +64,17 @@ routine = scheduler.generate_routine(
     end_time=time(20, 0),
 )
 
-# --- Print schedule ---
-print("=" * 55)
-print(routine.summary(owner))
-print("=" * 55)
+# --- Today's schedule ---
+sort_key = lambda t: tuple(map(int, t.scheduled_time.split(":"))) if t.scheduled_time else (24, 0)
+today = date.today()
+print("=" * 70)
+print(f"Today's Schedule — {today}")
+print("=" * 70)
+for task in scheduler.sort_by_time():
+    assignee = task.assigned_to.name if task.assigned_to else owner.first_name
+    status = "Done" if task.is_complete else "Pending"
+    print(f"  {today}  {task.scheduled_time}  {task.name:<30} — {assignee} [{status}]")
+print("=" * 70)
 
 # --- Print per-pet task counts ---
 print()
@@ -86,9 +94,22 @@ for member in owner.household_members:
     for task in member.tasks:
         print(f"  - {task.name} ({task.pet.name if task.pet else '?'})")
 
-# --- Mark some tasks complete to verify filtering ---
-task_objects[2].mark_complete()   # Feed Luna     — 07:00
-task_objects[3].mark_complete()   # Mochi's Eye Drops — 09:00
+# --- Mark recurring tasks complete and collect next occurrences ---
+next_occurrences = []
+for task in task_objects:
+    next_task = task.mark_complete()
+    if next_task:
+        next_occurrences.append(next_task)
+
+# --- Next proposed weekly schedule (recurring tasks only) ---
+print()
+print("=" * 70)
+print("Next Proposed Weekly Schedule — recurring tasks only")
+print("=" * 70)
+for task in sorted(next_occurrences, key=sort_key):
+    assignee = task.assigned_to.name if task.assigned_to else owner.first_name
+    print(f"  {task.next_due}  {task.scheduled_time}  {task.name:<30} — {assignee} [{task.recurrence.value}]")
+print("=" * 70)
 
 # --- Tasks sorted by scheduled_time (verifies out-of-order insertion is corrected) ---
 print()
@@ -99,7 +120,6 @@ for task in scheduler.sort_by_time():
     print(f"  {time_label}  {task.name:<30} [{status}]")
 
 # --- Filter: pending only (sorted by time) ---
-sort_key = lambda t: tuple(map(int, t.scheduled_time.split(":"))) if t.scheduled_time else (24, 0)
 print()
 print("Pending tasks:")
 for task in sorted(scheduler.filter_by_status(complete=False), key=sort_key):
