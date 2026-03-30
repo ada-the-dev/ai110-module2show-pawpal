@@ -35,6 +35,7 @@ class Task:
     category: TaskCategory = TaskCategory.OTHER
     pet: Optional[Pet] = None
     assigned_to: Optional[HouseholdMember] = None
+    _is_complete: bool = field(default=False, repr=False, init=False)
 
     def set_name(self, name: str) -> None:
         self.name = name
@@ -42,8 +43,18 @@ class Task:
     def set_occurrence(self, daily_occurrence: int) -> None:
         self.daily_occurrence = daily_occurrence
 
-    def set_pet(self, pet: Pet) -> None:
+    def set_complete(self, complete: bool) -> None:
+        self._is_complete = complete
+
+    @property
+    def is_complete(self) -> bool:
+        return self._is_complete
+
+    def set_pet(self, pet: Pet, owner: Optional[User] = None) -> None:
         self.pet = pet
+        pet._increment_task_count()
+        if owner is not None and self not in owner.tasks:
+            owner.add_task(self)
 
     def set_task_owner(self, member: HouseholdMember) -> None:
         self.assigned_to = member
@@ -80,7 +91,7 @@ class Routine:
         end_dt   = datetime.combine(date.today(), self.end_time)
         return int((end_dt - start_dt).total_seconds() // 60)
 
-    def summary(self) -> str:
+    def summary(self, owner: Optional[User] = None) -> str:
         lines = [f"Routine: {self.routine_name}"]
         if self.pet:
             lines.append(f"Pet: {self.pet.name}")
@@ -90,11 +101,18 @@ class Routine:
             f"({self.duration_minutes} min)"
         )
         lines.append(f"Tasks ({len(self._tasks)}):")
-        for task in self._tasks:
-            assignee = task.assigned_to.name if task.assigned_to else "Unassigned"
+        for i, task in enumerate(self._tasks, start=1):
+            if task.assigned_to:
+                assignee = task.assigned_to.name
+            elif owner:
+                assignee = owner.first_name
+            else:
+                assignee = "Unassigned"
+            status   = "Done" if task.is_complete else "Pending"
+            pet_name = task.pet.name if task.pet else "?"
             lines.append(
-                f"  [{task.category.value}] {task.name} "
-                f"x{task.daily_occurrence}/day — {assignee}"
+                f"  {i:>2}. [{task.category.value}] {task.name} "
+                f"({pet_name}) — {assignee} [{status}]"
             )
         return "\n".join(lines)
 
@@ -105,8 +123,9 @@ class Pet:
     breed: str
     birthdate: date
     _routines: list[Routine] = field(default_factory=list, repr=False)
-    _diet: list[str] = field(default_factory=list, repr=False)
+    _diet: list[str]         = field(default_factory=list, repr=False)
     _disabilities: list[str] = field(default_factory=list, repr=False)
+    _task_count: int          = field(default=0, repr=False, init=False)
 
     @property
     def age(self) -> int:
@@ -114,6 +133,13 @@ class Pet:
         return today.year - self.birthdate.year - (
             (today.month, today.day) < (self.birthdate.month, self.birthdate.day)
         )
+
+    @property
+    def task_count(self) -> int:
+        return self._task_count
+
+    def _increment_task_count(self) -> None:
+        self._task_count += 1
 
     def add_diet(self, diet_info: str) -> None:
         self._diet.append(diet_info)
@@ -177,7 +203,8 @@ class Scheduler:
             key=lambda t: (self._CATEGORY_PRIORITY.get(t.category, 5), t.name),
         )
         for task in sorted_tasks:
-            routine.add_task(task)
+            for _ in range(task.daily_occurrence):
+                routine.add_task(task)
         return routine
 
 
