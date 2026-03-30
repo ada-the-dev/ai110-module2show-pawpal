@@ -37,6 +37,7 @@ class Task:
     category: TaskCategory = TaskCategory.OTHER
     pet: Optional[Pet] = None
     assigned_to: Optional[HouseholdMember] = None
+    scheduled_time: Optional[str] = None          # "HH:MM" format, e.g. "07:30"
     _is_complete: bool = field(default=False, repr=False, init=False)
 
     def set_name(self, name: str) -> None:
@@ -214,6 +215,25 @@ class Scheduler:
     def tasks(self) -> list[Task]:
         """Return a copy of all tasks currently in the scheduler."""
         return list(self._tasks)
+
+    def filter_by_status(self, complete: bool) -> list[Task]:
+        """Return tasks whose completion status matches the given boolean."""
+        return [t for t in self._tasks if t.is_complete == complete]
+
+    def sort_by_time(self) -> list[Task]:
+        """Return tasks sorted by scheduled_time (HH:MM string) ascending.
+
+        How the lambda works:
+          - "HH:MM".split(":") → ["HH", "MM"]
+          - tuple(map(int, ...)) → (int_hour, int_minute)
+          - This gives Python a numeric pair to compare, so "07:30" < "13:00"
+            rather than a raw string comparison.
+          - Tasks with no scheduled_time sort to the end via the fallback (24, 0).
+        """
+        return sorted(
+            self._tasks,
+            key=lambda t: tuple(map(int, t.scheduled_time.split(":"))) if t.scheduled_time else (24, 0),
+        )
 
     def generate_routine(
         self,
