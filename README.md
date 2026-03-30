@@ -12,34 +12,34 @@ The app is able to do the following.
 
 ## Features List
 Owner Profile
-Set up your personal profile with a name and username to get started.
+- Set up your personal profile with a name and username to get started.
 
 Pet Management
-Add one or more pets with their name, breed, and birthdate. The app tracks each pet's age and how many tasks are assigned to them.
+- Add one or more pets with their name, breed, and birthdate. The app tracks each pet's age and how many tasks are assigned to them.
 
 Household Members
-Add family members or roommates who help with pet care. Each person can be assigned specific tasks and has their own task list.
+- Add family members or roommates who help with pet care. Each person can be assigned specific tasks and has their own task list.
 
 Task Creation
-Create care tasks for any pet with details like what type of care it is, how many times a day it needs to happen, what time it's scheduled, and who's responsible for it.
+- Create care tasks for any pet with details like what type of care it is, how many times a day it needs to happen, what time it's scheduled, and who's responsible for it.
 
 Task Assignment
-Assign any task to yourself or a household member. The app remembers who is in charge by default when the task repeats.
+- Assign any task to yourself or a household member. The app remembers who is in charge by default when the task repeats.
 
 Recurring Tasks
-Mark a task as daily or weekly. When it's completed, the app automatically prepares the next occurrence with the same details — no need to re-enter anything.
+- Mark a task as daily or weekly. When it's completed, the app automatically prepares the next occurrence with the same details — no need to re-enter anything.
 
 Daily Schedule View
-See all of today's tasks organized by time, showing who each task is assigned to, which pet it's for, and whether it's pending or done.
+- See all of today's tasks organized by time, showing who each task is assigned to, which pet it's for, and whether it's pending or done.
 
 Next Week Preview
-After completing recurring tasks, the app generates a proposed schedule for the next occurrence of each repeating task, sorted by time.
+- After completing recurring tasks, the app generates a proposed schedule for the next occurrence of each repeating task, sorted by time.
 
 Conflict Alerts
-If two tasks are scheduled at the same time, the app automatically flags it with a warning before displaying the schedule.
+- If two tasks are scheduled at the same time, the app automatically flags it with a warning before displaying the schedule.
 
 Pending & Completed Filters
-Quickly view only what still needs to be done today, or review what has already been completed.
+- Quickly view only what still needs to be done today, or review what has already been completed.
 
 ## Demo
 <a href="/demo_images/pawpal_demo1.PNG" target="_blank"><img src='/demo_images/pawpal_demo1.PNG' title='PawPal App' width='' alt='PawPal App' class='center-block' /></a>.
