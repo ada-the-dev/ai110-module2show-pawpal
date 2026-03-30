@@ -1,6 +1,9 @@
 # PawPal+ Project Reflection
 
 ## 1. System Design
+- The user should be able to add a pet.
+- The user should be able to add tasks they want to do for their pet.
+- The user should be able to see a recommended schedule of tasks for a day.
 
 **a. Initial design**
 
