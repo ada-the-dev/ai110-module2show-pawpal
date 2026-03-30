@@ -1,6 +1,6 @@
 from __future__ import annotations
 from dataclasses import dataclass, field
-from datetime import date, time, datetime
+from datetime import date, time, datetime, timedelta
 from typing import Optional
 from enum import Enum
 
@@ -12,6 +12,12 @@ class TaskCategory(Enum):
     GROOMING     = "grooming"
     APPOINTMENT  = "appointment"
     OTHER        = "other"
+
+
+class Recurrence(Enum):
+    NONE   = "none"
+    DAILY  = "daily"
+    WEEKLY = "weekly"
 
 
 @dataclass
@@ -38,6 +44,8 @@ class Task:
     pet: Optional[Pet] = None
     assigned_to: Optional[HouseholdMember] = None
     scheduled_time: Optional[str] = None          # "HH:MM" format, e.g. "07:30"
+    recurrence: Recurrence = Recurrence.NONE
+    next_due: Optional[date] = None
     _is_complete: bool = field(default=False, repr=False, init=False)
 
     def set_name(self, name: str) -> None:
@@ -52,9 +60,31 @@ class Task:
         """Set the completion status of this task to the given boolean."""
         self._is_complete = complete
 
-    def mark_complete(self) -> None:
-        """Mark this task as completed."""
+    def mark_complete(self) -> Optional[Task]:
+        """Mark this task as completed.
+
+        If the task recurs, returns a fresh Task for the next occurrence with
+        the same assignee carried over. Returns None for non-recurring tasks.
+        """
         self._is_complete = True
+
+        if self.recurrence == Recurrence.DAILY:
+            next_due = date.today() + timedelta(days=1)
+        elif self.recurrence == Recurrence.WEEKLY:
+            next_due = date.today() + timedelta(weeks=1)
+        else:
+            return None
+
+        return Task(
+            name=self.name,
+            daily_occurrence=self.daily_occurrence,
+            category=self.category,
+            pet=self.pet,
+            assigned_to=self.assigned_to,
+            scheduled_time=self.scheduled_time,
+            recurrence=self.recurrence,
+            next_due=next_due,
+        )
 
     @property
     def is_complete(self) -> bool:
