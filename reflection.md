@@ -8,12 +8,19 @@
 **a. Initial design**
 
 - Briefly describe your initial UML design.
+    The initial UML design includes an user class and pet class. An user may own zero to many pets. A pet may have zero to many routines, and each routine may consist of zero to many tasks. Additionally, a task can be assigned
+    to a household member (the user included).
+
 - What classes did you include, and what responsibilities did you assign to each?
+    I included five classes: User, Pet, Routine, Task, and HouseholdMember. I explained the relationships between the classes earlier. In regards to their attributes and methods, the classes will have a few basic attributes to describe the particular class. For example, the pet class will contain information about the pet's name, breed, and age. Additionally, there are some setter functions throughout the classes to allow the user to set the values of these attributes.
 
 **b. Design changes**
 
 - Did your design change during implementation?
+    Yes.
+
 - If yes, describe at least one change and why you made it.
+    The AI gave feedback that the classes had no getter functions, and I made this change because, as it correctly pointed out, if I cannot retrieve the values of any relevant attributes then I will not be able to use or display this information for the user.
 
 ---
 
